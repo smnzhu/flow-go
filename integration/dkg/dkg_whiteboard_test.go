@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -144,8 +145,9 @@ func TestDKGWithWhiteboard(t *testing.T) {
 
 	chainID := flow.Testnet
 
-	// we run the DKG protocol with 10 consensus nodes
-	conIdentities := unittest.IdentityListFixture(10, unittest.WithRole(flow.RoleConsensus))
+	// we run the DKG protocol with N consensus nodes
+	N := 10
+	conIdentities := unittest.IdentityListFixture(N, unittest.WithRole(flow.RoleConsensus))
 
 	// The EpochSetup event is received at view 100. The phase transitions are
 	// at views 150, 200, and 250. In between phase transitions, the controller
@@ -220,18 +222,18 @@ func TestDKGWithWhiteboard(t *testing.T) {
 	winningResultSigCount := 0
 	var winningResult result
 	for _, result := range whiteboard.results {
-		signers := whiteboard.resultSubmitters[result.Fingerprint()]
+		signers := whiteboard.resultSubmitters[flow.MakeID(result)]
 		if l := len(signers); l > winningResultSigCount {
 			winningResultSigCount = l
 			winningResult = result
 		}
-		t.Logf("result %s has %d proposers", result.Fingerprint(), len(signers))
+		t.Logf("result %s has %d proposers", flow.MakeID(result), len(signers))
 
 	}
 
-	require.GreaterOrEqual(t,
+	assert.Equal(t,
 		winningResultSigCount,
-		signature.RandomBeaconThreshold(len(nodes)),
+		N,
 	)
 
 	// create and test a threshold signature with the keys computed by dkg
@@ -259,6 +261,6 @@ func TestDKGWithWhiteboard(t *testing.T) {
 	for i, signer := range signers {
 		ok, err := signer.Verify(sigData, groupSignature, winningResult.groupKey)
 		require.NoError(t, err)
-		require.True(t, ok, fmt.Sprintf("node %d fails to verify threshold signature", i))
+		assert.True(t, ok, fmt.Sprintf("node %d fails to verify threshold signature", i))
 	}
 }

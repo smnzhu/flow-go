@@ -64,12 +64,12 @@ type result struct {
 	pubKeys  []crypto.PublicKey
 }
 
-func (r result) Fingerprint() flow.Identifier {
+func (r result) Fingerprint() []byte {
 	fingerprint := r.groupKey.Encode()
 	for _, pk := range r.pubKeys {
 		fingerprint = append(fingerprint, pk.Encode()...)
 	}
-	return flow.HashToID(fingerprint)
+	return fingerprint
 }
 
 func newWhiteboard() *whiteboard {
@@ -96,7 +96,7 @@ func (w *whiteboard) submit(nodeID flow.Identifier, groupKey crypto.PublicKey, p
 	defer w.Unlock()
 
 	result := result{groupKey: groupKey, pubKeys: pubKeys}
-	resultHash := result.Fingerprint()
+	resultHash := flow.MakeID(result)
 
 	w.results[resultHash] = result
 
