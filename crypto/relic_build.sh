@@ -18,7 +18,7 @@ echo $DIR
 CMAKE_FILE="${DIR}/relic/CMakeLists.txt"
 CMAKE_PRINT_CC="message ( STATUS \"CC=\$ENV{CC}\" )"
 if ! grep -Fxq "${CMAKE_PRINT_CC}" ${CMAKE_FILE}
-# only append if the line in the cmake list doesn't contain the file
+# only append if the line is not already in the cmake list 
 then
     echo ${CMAKE_PRINT_CC} >> ${CMAKE_FILE}
 fi
