@@ -88,7 +88,7 @@ func TestBLSBLS12381Hasher(t *testing.T) {
 func TestBLSEncodeDecode(t *testing.T) {
 
 	// generic tests
-	//testEncodeDecode(t, BLSBLS12381)
+	testEncodeDecode(t, BLSBLS12381)
 
 	// specific tests for BLS
 	//  zero private key
