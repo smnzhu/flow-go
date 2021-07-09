@@ -2,7 +2,7 @@
 #!/bin/bash
 
 # relic version or tag
-relic_version="7a9bba7f"
+relic_version="9206ae50"
 
 rm -rf relic
 
