@@ -5,7 +5,6 @@ import (
 
 	"github.com/onflow/flow-go/consensus/hotstuff"
 	"github.com/onflow/flow-go/consensus/hotstuff/model"
-	"github.com/onflow/flow-go/model/flow"
 )
 
 type CachingVoteCollector struct {
@@ -25,11 +24,9 @@ func (c *CachingVoteCollector) AddVote(vote *model.Vote) (bool, error) {
 		return false, fmt.Errorf("this CachingVoteCollector processes votes for blockID (%x), "+
 			"but got a vote for (%x)", c.blockID, vote.BlockID)
 	}
-	return c.pendingVotes.AddVote(vote), nil
-}
+	// TODO: check if we need to enforce a condition vote.View == c.view
 
-func (c *CachingVoteCollector) BlockID() flow.Identifier {
-	return c.blockID
+	return c.pendingVotes.AddVote(vote), nil
 }
 
 func (c *CachingVoteCollector) ProcessingStatus() hotstuff.ProcessingStatus {

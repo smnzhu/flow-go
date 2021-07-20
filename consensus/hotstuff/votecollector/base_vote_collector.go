@@ -11,3 +11,7 @@ func NewBaseVoteCollector(blockID flow.Identifier) BaseVoteCollector {
 		blockID: blockID,
 	}
 }
+
+func (c *BaseVoteCollector) BlockID() flow.Identifier {
+	return c.blockID
+}
