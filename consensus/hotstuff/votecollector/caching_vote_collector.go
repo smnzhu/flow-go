@@ -1,6 +1,8 @@
 package votecollector
 
 import (
+	"fmt"
+
 	"github.com/onflow/flow-go/consensus/hotstuff"
 	"github.com/onflow/flow-go/consensus/hotstuff/model"
 	"github.com/onflow/flow-go/model/flow"
@@ -19,7 +21,11 @@ func NewCachingVoteCollector(base BaseVoteCollector) *CachingVoteCollector {
 }
 
 func (c *CachingVoteCollector) AddVote(vote *model.Vote) (bool, error) {
-	panic("implement me")
+	if vote.BlockID != c.blockID {
+		return false, fmt.Errorf("this CachingVoteCollector processes votes for blockID (%x), "+
+			"but got a vote for (%x)", c.blockID, vote.BlockID)
+	}
+	return c.pendingVotes.AddVote(vote), nil
 }
 
 func (c *CachingVoteCollector) BlockID() flow.Identifier {
