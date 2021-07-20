@@ -10,6 +10,11 @@ import (
 	"github.com/onflow/flow-go/consensus/hotstuff/model"
 )
 
+var (
+	ErrInvalidCollectorStateTransition = errors.New("invalid state transition")
+	ErrDifferentCollectorState         = errors.New("different state")
+)
+
 type VoteCollectorStateMachine struct {
 	BaseVoteCollector
 
@@ -66,4 +71,25 @@ func (csm *VoteCollectorStateMachine) ProcessingStatus() hotstuff.ProcessingStat
 
 func (csm *VoteCollectorStateMachine) ChangeProcessingStatus(expectedValue, newValue hotstuff.ProcessingStatus) error {
 	panic("implement me")
+}
+
+// caching2Verifying ensures that the collector is currently in state `CachingVotes`
+// and replaces it by a newly-created VerifyingVoteCollector.
+// Returns:
+// * CachingVoteCollector as of before the update
+// * ErrDifferentCollectorState if the VoteCollector's state is _not_ `CachingVotes`
+// * all other errors are unexpected and potential symptoms of internal bugs or state corruption (fatal)
+func (csm *VoteCollectorStateMachine) caching2Verifying() (*CachingVoteCollector, error) {
+	csm.Lock()
+	defer csm.Unlock()
+	cachingCollector, ok := csm.atomicLoadCollector().(*CachingVoteCollector)
+	if !ok {
+		return nil, fmt.Errorf("collectors current state is %s: %w",
+			cachingCollector.ProcessingStatus().String(), ErrDifferentCollectorState)
+	}
+
+	verifyingCollector := NewVerifyingVoteCollector(csm.BaseVoteCollector)
+	csm.collector.Store(&atomicValueWrapper{collector: verifyingCollector})
+
+	return cachingCollector, nil
 }
