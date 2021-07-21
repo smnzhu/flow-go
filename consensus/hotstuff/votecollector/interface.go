@@ -66,3 +66,9 @@ type RandomBeaconReconstructor interface {
 	// or some of the added signatures shares were invalid.
 	Reconstruct() (crypto.Signature, error)
 }
+
+// Signer is responsible for creating votes, proposals and QC's for a given block.
+type QCBuilder interface {
+	// CreateQC creates a QC for the given block.
+	CreateQC(stakingSig, thresholdSig flow.AggregatedSignature, beaconSig crypto.Signature) (*flow.QuorumCertificate, error)
+}

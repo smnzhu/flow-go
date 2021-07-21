@@ -13,6 +13,7 @@ type VerifyingVoteCollector struct {
 
 	aggregator    CombinedAggregator
 	reconstructor RandomBeaconReconstructor
+	qcBuilder     QCBuilder
 	done          atomic.Bool
 }
 
@@ -80,17 +81,25 @@ func (c *VerifyingVoteCollector) buildQC() error {
 
 	// at this point we can be sure that no one else is creating QC
 
+	// aggregator returns two signatures, one is aggregated staking signature
+	// another one is aggregated threshold signature
 	stakingSig, thresholdSig, err := c.aggregator.AggregateSignature()
 	if err != nil {
 		return fmt.Errorf("could not construct aggregated signatures: %w", err)
 	}
 
+	// reconstructor returns random beacon signature reconstructed from threshold signature shares
 	randomBeaconSig, err := c.reconstructor.Reconstruct()
 	if err != nil {
 		return fmt.Errorf("could not reconstruct random beacon signature: %w", err)
 	}
 
-	// TODO: using aggregated signatures, construct QC
+	qc, err := c.qcBuilder.CreateQC(stakingSig, thresholdSig, randomBeaconSig)
+	if err != nil {
+		return fmt.Errorf("could not create quorum certificate: %w", err)
+	}
+
+	// TODO: submit created QC through processing pipeline
 
 	return nil
 }
