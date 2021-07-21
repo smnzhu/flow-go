@@ -82,10 +82,10 @@ func (csm *VoteCollectorStateMachine) ChangeProcessingStatus(expectedValue, newV
 func (csm *VoteCollectorStateMachine) caching2Verifying() (*CachingVoteCollector, error) {
 	csm.Lock()
 	defer csm.Unlock()
-	cachingCollector, ok := csm.atomicLoadCollector().(*CachingVoteCollector)
+	clr := csm.atomicLoadCollector()
+	cachingCollector, ok := clr.(*CachingVoteCollector)
 	if !ok {
-		return nil, fmt.Errorf("collectors current state is %s: %w",
-			cachingCollector.ProcessingStatus().String(), ErrDifferentCollectorState)
+		return nil, fmt.Errorf("collector's current state is %s: %w", clr.ProcessingStatus().String(), ErrDifferentCollectorState)
 	}
 
 	verifyingCollector := NewVerifyingVoteCollector(csm.BaseVoteCollector)
