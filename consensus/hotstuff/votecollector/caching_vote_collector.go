@@ -19,14 +19,15 @@ func NewCachingVoteCollector(base BaseVoteCollector) *CachingVoteCollector {
 	}
 }
 
-func (c *CachingVoteCollector) AddVote(vote *model.Vote) (bool, error) {
+func (c *CachingVoteCollector) AddVote(vote *model.Vote) error {
 	if vote.BlockID != c.blockID {
-		return false, fmt.Errorf("this CachingVoteCollector processes votes for blockID (%x), "+
+		return fmt.Errorf("this CachingVoteCollector processes votes for blockID (%x), "+
 			"but got a vote for (%x)", c.blockID, vote.BlockID)
 	}
 	// TODO: check if we need to enforce a condition vote.View == c.view
+	_ = c.pendingVotes.AddVote(vote)
 
-	return c.pendingVotes.AddVote(vote), nil
+	return nil
 }
 
 func (c *CachingVoteCollector) ProcessingStatus() hotstuff.ProcessingStatus {

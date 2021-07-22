@@ -2,6 +2,7 @@ package votecollector
 
 import (
 	"fmt"
+
 	"go.uber.org/atomic"
 
 	"github.com/onflow/flow-go/consensus/hotstuff"
@@ -11,6 +12,7 @@ import (
 type VerifyingVoteCollector struct {
 	BaseVoteCollector
 
+	dkg           hotstuff.DKG
 	aggregator    CombinedAggregator
 	reconstructor RandomBeaconReconstructor
 	qcBuilder     QCBuilder
@@ -23,53 +25,58 @@ func NewVerifyingVoteCollector(base BaseVoteCollector) *VerifyingVoteCollector {
 	}
 }
 
-func (c *VerifyingVoteCollector) AddVote(vote *model.Vote) (bool, error) {
+func (c *VerifyingVoteCollector) AddVote(vote *model.Vote) error {
 	if c.done.Load() {
-		return false, nil
+		return nil
 	}
 
 	verified, sigType, err := c.aggregator.Verify(vote.SignerID, vote.SigData)
 	if err != nil {
-		return false, fmt.Errorf("could not verify vote signature: %w", err)
+		return fmt.Errorf("could not verify vote signature: %w", err)
 	}
 
 	// TODO: handle if verified == false
 	if !verified {
-		return false, fmt.Errorf("could not verify vote signature: %w", err)
+		return fmt.Errorf("could not verify vote signature: %w", err)
 	}
 
 	if c.done.Load() {
-		return false, nil
+		return nil
 	}
 
-	added, err := c.aggregator.TrustedAdd(vote.SignerID, vote.SigData, sigType)
+	_, err = c.aggregator.TrustedAdd(vote.SignerID, vote.SigData, sigType)
 	if err != nil {
-		return false, fmt.Errorf("could not aggregate vote signature: %w", err)
+		return fmt.Errorf("could not aggregate vote signature: %w", err)
 	}
 
-	// TODO: properly fix this case
-	if !added {
-		return false, fmt.Errorf("could not aggregate vote signature: %w", err)
-	}
+	if sigType == SigTypeThreshold {
+		index, err := c.dkg.Index(vote.SignerID)
+		if err != nil {
+			return fmt.Errorf("could not retrieve dkg index for signer (%v): %w", vote.SignerID, err)
+		}
+		_, err = c.reconstructor.TrustedAdd(index, vote.SigData)
+		if err != nil {
+			return fmt.Errorf("could not add random beacon sig share: %w", err)
+		}
 
-	//c.reconstructor.TrustedAdd(vote)
+	}
 
 	// we haven't collected sufficient weight, we have nothing to do further
 	if !c.aggregator.HasSufficientWeight() {
-		return true, nil
+		return nil
 	}
 
 	// we haven't collected sufficient shares, we have nothing to do further
 	if !c.reconstructor.HasSufficientShares() {
-		return true, nil
+		return nil
 	}
 
 	err = c.buildQC()
 	if err != nil {
-		return false, fmt.Errorf("could not build QC: %w", err)
+		return fmt.Errorf("could not build QC: %w", err)
 	}
 
-	return true, nil
+	return nil
 }
 
 func (c *VerifyingVoteCollector) buildQC() error {

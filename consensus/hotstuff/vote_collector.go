@@ -24,12 +24,10 @@ func (ps ProcessingStatus) String() string {
 // VoteCollectorState collects votes for the same block, produces QC when enough votes are collected
 type VoteCollectorState interface {
 	// AddVote adds a vote to the collector
-	// returns true if the vote was added
-	// returns false otherwise
 	// return error if the signature is invalid
 	// When enough votes have been added to produce a QC, the QC will be created asynchronously, and
 	// passed to EventLoop through a callback.
-	AddVote(vote *model.Vote) (bool, error)
+	AddVote(vote *model.Vote) error
 
 	// BlockID returns the block ID that the collector is collecting votes for.
 	// This method is useful when adding the newly created vote collector to vote collectors map.

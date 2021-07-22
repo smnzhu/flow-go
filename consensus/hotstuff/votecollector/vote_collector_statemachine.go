@@ -45,24 +45,20 @@ func NewVoteCollectorStateMachine(base BaseVoteCollector) *VoteCollectorStateMac
 	return sm
 }
 
-func (csm *VoteCollectorStateMachine) AddVote(vote *model.Vote) (bool, error) {
-	var (
-		added bool
-		err   error
-	)
+func (csm *VoteCollectorStateMachine) AddVote(vote *model.Vote) error {
 	for {
 		collector := csm.atomicLoadCollector()
 		currentState := collector.ProcessingStatus()
-		added, err = collector.AddVote(vote)
+		err := collector.AddVote(vote)
 		if err != nil {
-			return false, fmt.Errorf("could not add vote %v: %w", vote.ID(), err)
+			return fmt.Errorf("could not add vote %v: %w", vote.ID(), err)
 		}
 		if currentState != csm.ProcessingStatus() {
 			continue
 		}
 		break
 	}
-	return added, nil
+	return nil
 }
 
 func (csm *VoteCollectorStateMachine) ProcessingStatus() hotstuff.ProcessingStatus {
