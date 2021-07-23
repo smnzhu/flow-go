@@ -2,6 +2,7 @@ package votecollector
 
 import (
 	"fmt"
+	"github.com/onflow/flow-go/model/flow"
 
 	"github.com/onflow/flow-go/consensus/hotstuff"
 	"github.com/onflow/flow-go/consensus/hotstuff/model"
@@ -19,15 +20,15 @@ func NewCachingVoteCollector(base BaseVoteCollector) *CachingVoteCollector {
 	}
 }
 
-func (c *CachingVoteCollector) AddVote(vote *model.Vote) error {
+func (c *CachingVoteCollector) AddVote(vote *model.Vote) (*flow.QuorumCertificate, bool, error) {
 	if vote.BlockID != c.blockID {
-		return fmt.Errorf("this CachingVoteCollector processes votes for blockID (%x), "+
+		return nil, false, fmt.Errorf("this CachingVoteCollector processes votes for blockID (%x), "+
 			"but got a vote for (%x)", c.blockID, vote.BlockID)
 	}
-	// TODO: check if we need to enforce a condition vote.View == c.view
+
 	_ = c.pendingVotes.AddVote(vote)
 
-	return nil
+	return nil, false, nil
 }
 
 func (c *CachingVoteCollector) ProcessingStatus() hotstuff.ProcessingStatus {

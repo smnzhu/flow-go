@@ -5,7 +5,7 @@ import (
 	"github.com/onflow/flow-go/model/flow"
 )
 
-// The aggregable signature type.
+// SigType is the aggregable signature type.
 type SigType int
 
 // There are two signatures are aggregable, one is the normal staking signature,
@@ -16,7 +16,7 @@ const (
 	SigTypeInvalid
 )
 
-// SignatureAggregator aggregates signatures from different signers for the same message.
+// CombinedAggregator aggregates signatures from different signers for the same message.
 // The instance must be initialized with the message, the required weight to be
 // sufficient for aggregation, as well as the weight for each signer.
 type CombinedAggregator interface {
@@ -51,7 +51,7 @@ type RandomBeaconReconstructor interface {
 
 	// TrustedAdd adds the signature share to the reconstructors internal
 	// state. Validity of signature is not checked. It is up to the
-	// implementation, wheter it still adds a signature or not, when the
+	// implementation, whether it still adds a signature or not, when the
 	// minimal number of required sig shares has already been reached,
 	// because the reconstructed group signature is the same.
 	// Returns: true if and only if enough signature shares were collected
@@ -67,7 +67,7 @@ type RandomBeaconReconstructor interface {
 	Reconstruct() (crypto.Signature, error)
 }
 
-// Signer is responsible for creating votes, proposals and QC's for a given block.
+// QCBuilder is responsible for creating votes, proposals and QC's for a given block.
 type QCBuilder interface {
 	// CreateQC creates a QC for the given block.
 	CreateQC(stakingSig, thresholdSig flow.AggregatedSignature, beaconSig crypto.Signature) (*flow.QuorumCertificate, error)

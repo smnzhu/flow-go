@@ -1,6 +1,7 @@
 package votecollector
 
 import (
+	"errors"
 	"fmt"
 	"sync"
 
@@ -8,6 +9,7 @@ import (
 
 	"github.com/onflow/flow-go/consensus/hotstuff"
 	"github.com/onflow/flow-go/consensus/hotstuff/model"
+	"github.com/onflow/flow-go/model/flow"
 )
 
 var (
@@ -45,20 +47,20 @@ func NewVoteCollectorStateMachine(base BaseVoteCollector) *VoteCollectorStateMac
 	return sm
 }
 
-func (csm *VoteCollectorStateMachine) AddVote(vote *model.Vote) error {
+func (csm *VoteCollectorStateMachine) AddVote(vote *model.Vote) (*flow.QuorumCertificate, bool, error) {
 	for {
 		collector := csm.atomicLoadCollector()
 		currentState := collector.ProcessingStatus()
-		err := collector.AddVote(vote)
+		qc, created, err := collector.AddVote(vote)
 		if err != nil {
-			return fmt.Errorf("could not add vote %v: %w", vote.ID(), err)
+			return nil, false, fmt.Errorf("could not add vote %v: %w", vote.ID(), err)
 		}
 		if currentState != csm.ProcessingStatus() {
 			continue
 		}
-		break
+
+		return qc, created, nil
 	}
-	return nil
 }
 
 func (csm *VoteCollectorStateMachine) ProcessingStatus() hotstuff.ProcessingStatus {

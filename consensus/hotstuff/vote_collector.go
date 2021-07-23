@@ -24,10 +24,11 @@ func (ps ProcessingStatus) String() string {
 // VoteCollectorState collects votes for the same block, produces QC when enough votes are collected
 type VoteCollectorState interface {
 	// AddVote adds a vote to the collector
+	// if vote collector was able to create a QC, it will be returned together will bool value indicating success
 	// return error if the signature is invalid
 	// When enough votes have been added to produce a QC, the QC will be created asynchronously, and
 	// passed to EventLoop through a callback.
-	AddVote(vote *model.Vote) error
+	AddVote(vote *model.Vote) (*flow.QuorumCertificate, bool, error)
 
 	// BlockID returns the block ID that the collector is collecting votes for.
 	// This method is useful when adding the newly created vote collector to vote collectors map.
@@ -45,7 +46,7 @@ type VoteCollector interface {
 	// equal to `expectedValue`. The return indicates whether the state was updated.
 	// The implementation only allows the transitions
 	//         CachingVotes -> VerifyingVotes
-	//    and                      VerifyingVotes -> Invalid
+	//    and                  VerifyingVotes -> Invalid
 	// Error returns:
 	// * nil if the state transition was successfully executed
 	// * ErrDifferentCollectorState if the VoteCollector's state is different than expectedCurrentStatus

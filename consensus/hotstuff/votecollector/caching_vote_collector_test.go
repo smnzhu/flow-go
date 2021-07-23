@@ -18,8 +18,7 @@ func TestCachingVoteCollector_AddVote(t *testing.T) {
 	t.Run("add-invalid-vote", func(t *testing.T) {
 		collector := NewCachingVoteCollector(NewBaseVoteCollector(blockID))
 		vote := unittest.VoteFixture()
-		added, err := collector.AddVote(vote)
-		require.False(t, added)
+		_, _, err := collector.AddVote(vote)
 		require.Error(t, err)
 		require.Empty(t, collector.GetVotes())
 	})
@@ -27,8 +26,7 @@ func TestCachingVoteCollector_AddVote(t *testing.T) {
 		collector := NewCachingVoteCollector(NewBaseVoteCollector(blockID))
 		vote := unittest.VoteFixture()
 		vote.BlockID = blockID
-		added, err := collector.AddVote(vote)
-		require.True(t, added)
+		_, _, err := collector.AddVote(vote)
 		require.NoError(t, err)
 		require.Equal(t, []*model.Vote{vote}, collector.GetVotes())
 	})
@@ -36,12 +34,10 @@ func TestCachingVoteCollector_AddVote(t *testing.T) {
 		collector := NewCachingVoteCollector(NewBaseVoteCollector(blockID))
 		vote := unittest.VoteFixture()
 		vote.BlockID = blockID
-		added, err := collector.AddVote(vote)
-		require.True(t, added)
+		_, _, err := collector.AddVote(vote)
 		require.NoError(t, err)
 
-		added, err = collector.AddVote(vote)
-		require.False(t, added)
+		_, _, err = collector.AddVote(vote)
 		require.NoError(t, err)
 		require.Equal(t, []*model.Vote{vote}, collector.GetVotes())
 	})
@@ -72,7 +68,7 @@ func TestCachingVoteCollector_GetVotes(t *testing.T) {
 		vote := unittest.VoteFixture()
 		vote.BlockID = blockID
 		expectedVotes[i] = vote
-		_, err := collector.AddVote(vote)
+		_, _, err := collector.AddVote(vote)
 		require.NoError(t, err)
 	}
 	require.ElementsMatch(t, expectedVotes, collector.GetVotes())
