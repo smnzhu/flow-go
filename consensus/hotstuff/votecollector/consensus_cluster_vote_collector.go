@@ -10,24 +10,23 @@ import (
 	"github.com/onflow/flow-go/consensus/hotstuff/model"
 )
 
-type VerifyingVoteCollector struct {
+type ConsensusClusterVoteCollector struct {
 	BaseVoteCollector
 
 	dkg           hotstuff.DKG
-	aggregator    CombinedAggregator
-	reconstructor RandomBeaconReconstructor
-	qcBuilder     QCBuilder
+	aggregator    *CombinedAggregator
+	reconstructor *RandomBeaconReconstructor
 	onQCCreated   hotstuff.OnQCCreated
 	done          atomic.Bool
 }
 
-func NewVerifyingVoteCollector(base BaseVoteCollector) *VerifyingVoteCollector {
-	return &VerifyingVoteCollector{
+func NewVerifyingVoteCollector(base BaseVoteCollector) *ConsensusClusterVoteCollector {
+	return &ConsensusClusterVoteCollector{
 		BaseVoteCollector: base,
 	}
 }
 
-func (c *VerifyingVoteCollector) AddVote(vote *model.Vote) error {
+func (c *ConsensusClusterVoteCollector) AddVote(vote *model.Vote) error {
 	if c.done.Load() {
 		return nil
 	}
@@ -60,7 +59,6 @@ func (c *VerifyingVoteCollector) AddVote(vote *model.Vote) error {
 		if err != nil {
 			return fmt.Errorf("could not add random beacon sig share: %w", err)
 		}
-
 	}
 
 	// we haven't collected sufficient weight, we have nothing to do further
@@ -85,7 +83,7 @@ func (c *VerifyingVoteCollector) AddVote(vote *model.Vote) error {
 	return nil
 }
 
-func (c *VerifyingVoteCollector) buildQC() (*flow.QuorumCertificate, error) {
+func (c *ConsensusClusterVoteCollector) buildQC() (*flow.QuorumCertificate, error) {
 	// other goroutine might be constructing QC at this time, check with CAS
 	// and exit early
 	if !c.done.CAS(false, true) {
@@ -96,25 +94,22 @@ func (c *VerifyingVoteCollector) buildQC() (*flow.QuorumCertificate, error) {
 
 	// aggregator returns two signatures, one is aggregated staking signature
 	// another one is aggregated threshold signature
-	stakingSig, thresholdSig, err := c.aggregator.AggregateSignature()
+	_, _, err := c.aggregator.AggregateSignature()
 	if err != nil {
 		return nil, fmt.Errorf("could not construct aggregated signatures: %w", err)
 	}
 
 	// reconstructor returns random beacon signature reconstructed from threshold signature shares
-	randomBeaconSig, err := c.reconstructor.Reconstruct()
+	_, err = c.reconstructor.Reconstruct()
 	if err != nil {
 		return nil, fmt.Errorf("could not reconstruct random beacon signature: %w", err)
 	}
 
-	qc, err := c.qcBuilder.CreateQC(stakingSig, thresholdSig, randomBeaconSig)
-	if err != nil {
-		return nil, fmt.Errorf("could not create quorum certificate: %w", err)
-	}
+	// TODO: use signatures to build qc
 
-	return qc, nil
+	panic("not implemented")
 }
 
-func (VerifyingVoteCollector) ProcessingStatus() hotstuff.ProcessingStatus {
+func (c *ConsensusClusterVoteCollector) ProcessingStatus() hotstuff.ProcessingStatus {
 	return hotstuff.VerifyingVotes
 }

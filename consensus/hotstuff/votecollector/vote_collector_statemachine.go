@@ -16,11 +16,16 @@ var (
 	ErrDifferentCollectorState         = errors.New("different state")
 )
 
+// NewVerifyingCollectorFactoryMethod is a factory method to generate a hotstuff.VoteCollectorState
+type NewVerifyingCollectorFactoryMethod = func(base BaseVoteCollector) (hotstuff.VoteCollectorState, error)
+
+// VoteCollectorStateMachine implements a state machine for transition between different states of vote collector
 type VoteCollectorStateMachine struct {
 	BaseVoteCollector
 
 	sync.Mutex
-	collector atomic.Value
+	collector                atomic.Value
+	createVerifyingCollector NewVerifyingCollectorFactoryMethod
 }
 
 func (csm *VoteCollectorStateMachine) atomicLoadCollector() hotstuff.VoteCollectorState {
@@ -66,12 +71,30 @@ func (csm *VoteCollectorStateMachine) ProcessingStatus() hotstuff.ProcessingStat
 	return csm.atomicLoadCollector().ProcessingStatus()
 }
 
-func (csm *VoteCollectorStateMachine) ChangeProcessingStatus(expectedValue, newValue hotstuff.ProcessingStatus) error {
-	panic("implement me")
+func (csm *VoteCollectorStateMachine) ChangeProcessingStatus(expectedCurrentStatus, newStatus hotstuff.ProcessingStatus) error {
+	// don't transition between same states
+	if expectedCurrentStatus == newStatus {
+		return nil
+	}
+
+	if (expectedCurrentStatus == hotstuff.CachingVotes) && (newStatus == hotstuff.VerifyingVotes) {
+		cachingCollector, err := csm.caching2Verifying()
+		if err != nil {
+			return fmt.Errorf("failed to transistion VoteCollector from %s to %s: %w", expectedCurrentStatus.String(), newStatus.String(), err)
+		}
+
+		for _, vote := range cachingCollector.GetVotes() {
+			task := csm.reIngestVoteTask(vote)
+			csm.workerPool.Submit(task)
+		}
+		return nil
+	}
+
+	return fmt.Errorf("cannot transition from %s to %s: %w", expectedCurrentStatus.String(), newStatus.String(), ErrInvalidCollectorStateTransition)
 }
 
 // caching2Verifying ensures that the collector is currently in state `CachingVotes`
-// and replaces it by a newly-created VerifyingVoteCollector.
+// and replaces it by a newly-created ConsensusClusterVoteCollector.
 // Returns:
 // * CachingVoteCollector as of before the update
 // * ErrDifferentCollectorState if the VoteCollector's state is _not_ `CachingVotes`
@@ -85,8 +108,21 @@ func (csm *VoteCollectorStateMachine) caching2Verifying() (*CachingVoteCollector
 		return nil, fmt.Errorf("collector's current state is %s: %w", clr.ProcessingStatus().String(), ErrDifferentCollectorState)
 	}
 
-	verifyingCollector := NewVerifyingVoteCollector(csm.BaseVoteCollector)
+	verifyingCollector, err := csm.createVerifyingCollector(csm.BaseVoteCollector)
+	if err != nil {
+		return nil, fmt.Errorf("could not create verifying vote collector")
+	}
+
 	csm.collector.Store(&atomicValueWrapper{collector: verifyingCollector})
 
 	return cachingCollector, nil
+}
+
+// reIngestIncorporatedResultTask returns a functor for re-ingesting the specified
+// IncorporatedResults; functor handles all potential business logic errors.
+func (csm *VoteCollectorStateMachine) reIngestVoteTask(vote *model.Vote) func() {
+	panic("implement me")
+	task := func() {
+	}
+	return task
 }

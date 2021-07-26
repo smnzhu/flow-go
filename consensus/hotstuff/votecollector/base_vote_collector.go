@@ -1,8 +1,13 @@
 package votecollector
 
-import "github.com/onflow/flow-go/model/flow"
+import (
+	"github.com/gammazero/workerpool"
+	"github.com/onflow/flow-go/model/flow"
+)
 
 type BaseVoteCollector struct {
+	workerPool *workerpool.WorkerPool
+
 	blockID flow.Identifier
 }
 
