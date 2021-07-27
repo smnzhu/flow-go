@@ -2,6 +2,7 @@ package votecollector
 
 import (
 	"fmt"
+
 	"github.com/onflow/flow-go/consensus/hotstuff"
 	"github.com/onflow/flow-go/consensus/hotstuff/model"
 )

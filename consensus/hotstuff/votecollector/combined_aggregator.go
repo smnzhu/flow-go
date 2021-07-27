@@ -1,9 +1,10 @@
 package votecollector
 
 import (
+	"go.uber.org/atomic"
+
 	"github.com/onflow/flow-go/crypto"
 	"github.com/onflow/flow-go/model/flow"
-	"go.uber.org/atomic"
 )
 
 // combinedAggregator aggregates signatures from different signers for the same message.

@@ -1,9 +1,10 @@
 package votecollector
 
 import (
+	"go.uber.org/atomic"
+
 	"github.com/onflow/flow-go/consensus/hotstuff"
 	"github.com/onflow/flow-go/consensus/hotstuff/model"
-	"go.uber.org/atomic"
 )
 
 type CollectionClusterVoteCollector struct {

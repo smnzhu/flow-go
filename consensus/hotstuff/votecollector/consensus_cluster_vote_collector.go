@@ -2,12 +2,12 @@ package votecollector
 
 import (
 	"fmt"
-	"github.com/onflow/flow-go/model/flow"
 
 	"go.uber.org/atomic"
 
 	"github.com/onflow/flow-go/consensus/hotstuff"
 	"github.com/onflow/flow-go/consensus/hotstuff/model"
+	"github.com/onflow/flow-go/model/flow"
 )
 
 type ConsensusClusterVoteCollector struct {
