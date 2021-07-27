@@ -2,11 +2,11 @@ package votecollector
 
 import "github.com/onflow/flow-go/crypto"
 
-type RandomBeaconReconstructor struct {
+type randomBeaconReconstructor struct {
 }
 
 // Verify returns true if and only if the signature is valid.
-func (rbr *RandomBeaconReconstructor) Verify(signerID interface{}, sig crypto.Signature) (bool, error) {
+func (rbr *randomBeaconReconstructor) Verify(signerID interface{}, sig crypto.Signature) (bool, error) {
 	panic("implement me")
 }
 
@@ -16,19 +16,19 @@ func (rbr *RandomBeaconReconstructor) Verify(signerID interface{}, sig crypto.Si
 // minimal number of required sig shares has already been reached,
 // because the reconstructed group signature is the same.
 // Returns: true if and only if enough signature shares were collected
-func (rbr *RandomBeaconReconstructor) TrustedAdd(signerIndex uint, sigShare crypto.Signature) (bool, error) {
+func (rbr *randomBeaconReconstructor) TrustedAdd(signerIndex uint, sigShare crypto.Signature) (bool, error) {
 	panic("implement me")
 }
 
 // HasSufficientShares returns true if and only if reconstructor
 // has collected a sufficient number of signature shares.
-func (rbr *RandomBeaconReconstructor) HasSufficientShares() bool {
+func (rbr *randomBeaconReconstructor) HasSufficientShares() bool {
 	panic("implement me")
 }
 
 // Reconstruct reconstructs the group signature from the provided
 // signature shares. Errors if the the number of shares is insufficient
 // or some of the added signatures shares were invalid.
-func (rbr *RandomBeaconReconstructor) Reconstruct() (crypto.Signature, error) {
+func (rbr *randomBeaconReconstructor) Reconstruct() (crypto.Signature, error) {
 	panic("implement me")
 }
