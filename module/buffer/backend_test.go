@@ -19,7 +19,7 @@ func TestBackendSuite(t *testing.T) {
 	suite.Run(t, new(BackendSuite))
 }
 
-func (suite *BackendSuite) SetupTest() { // Foo
+func (suite *BackendSuite) SetupTest() { // Foo1
 	suite.backend = newBackend()
 }
 
