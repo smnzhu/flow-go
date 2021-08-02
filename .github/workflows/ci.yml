@@ -12,6 +12,7 @@ on:
       - master
       - 'auto-cadence-upgrade/**'
 
+# test comment
 jobs:
   golangci:
     name: Lint
