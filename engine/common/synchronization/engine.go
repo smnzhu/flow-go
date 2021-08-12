@@ -45,7 +45,7 @@ const defaultEngineRequestsWorkers = 8
 
 // finalSnapshot is a helper structure which contains latest finalized header and participants list
 // for consensus nodes, it is used in Engine to access latest valid data
-type finalizedSnapshot struct {
+type finalizedHeader struct {
 	head         *flow.Header
 	participants flow.IdentityList
 }
@@ -61,10 +61,10 @@ type Engine struct {
 	blocks  storage.Blocks
 	comp    network.Engine // compliance layer engine
 
-	pollInterval          time.Duration
-	scanInterval          time.Duration
-	core                  module.SyncCore
-	lastFinalizedSnapshot *finalizedSnapshot // last finalized snapshot of header and consensus participants
+	pollInterval        time.Duration
+	scanInterval        time.Duration
+	core                module.SyncCore
+	lastFinalizedHeader *finalizedHeader // last finalized snapshot of header and consensus participants
 
 	pendingSyncRequests   engine.MessageStore    // message store for *message.SyncRequest
 	pendingBatchRequests  engine.MessageStore    // message store for *message.BatchRequest
@@ -139,10 +139,10 @@ func New(
 
 // finalSnapshot returns last locally stored snapshot which contains final header
 // and list of consensus participants
-func (e *Engine) finalSnapshot() *finalizedSnapshot {
+func (e *Engine) finalSnapshot() *finalizedHeader {
 	e.unit.Lock()
 	defer e.unit.Unlock()
-	return e.lastFinalizedSnapshot
+	return e.lastFinalizedHeader
 }
 
 // onFinalizedBlock updates latest locally cached finalized snapshot
@@ -164,10 +164,10 @@ func (e *Engine) onFinalizedBlock() error {
 
 	e.unit.Lock()
 	defer e.unit.Unlock()
-	if e.lastFinalizedSnapshot != nil && e.lastFinalizedSnapshot.head.Height >= head.Height {
+	if e.lastFinalizedHeader != nil && e.lastFinalizedHeader.head.Height >= head.Height {
 		return nil
 	}
-	e.lastFinalizedSnapshot = &finalizedSnapshot{
+	e.lastFinalizedHeader = &finalizedHeader{
 		head:         head,
 		participants: participants,
 	}
